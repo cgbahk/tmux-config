@@ -1,4 +1,7 @@
+import sys
 from time import sleep
+import shutil
+import subprocess
 
 import psutil
 
@@ -20,8 +23,27 @@ def main():
     download_speed = int((net_stat_1.bytes_recv - net_stat_0.bytes_recv) / 1024**2 / INTERVAL)
     upload_speed = int((net_stat_1.bytes_sent - net_stat_0.bytes_sent) / 1024**2 / INTERVAL)
 
-    # TODO Add GPU metrics
     report = f"C{cpu_util:02} M{mem_percent:02} U{upload_speed:02} D{download_speed:02}"
+
+    if shutil.which("nvidia-smi") is None:
+        print(report)
+        sys.exit()
+
+    result = subprocess.check_output(
+        [
+            "nvidia-smi",
+            "--format=csv,noheader,nounits",
+            #            0               1           2            3          4
+            "--query-gpu=utilization.gpu,memory.free,memory.total,power.draw,power.limit",
+        ]
+    ).decode().strip().split(", ")
+
+    gpu_util = int(result[0])
+    gpu_mem_percent = int(100 - float(result[1]) * 100 / float(result[2]))
+    gpu_pow_percent = int(float(result[3]) * 100 / float(result[4]))
+
+    report += f" G{gpu_util:02} M{gpu_mem_percent:02} P{gpu_pow_percent:02}"
+
     print(report)
 
 
