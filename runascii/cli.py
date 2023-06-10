@@ -36,13 +36,15 @@ def main():
             #            0               1           2            3          4
             "--query-gpu=utilization.gpu,memory.free,memory.total,power.draw,power.limit",
         ]
-    ).decode().strip().split(", ")
+    ).decode().strip()
 
-    gpu_util = int(result[0])
-    gpu_mem_percent = int(100 - float(result[1]) * 100 / float(result[2]))
-    gpu_pow_percent = int(float(result[3]) * 100 / float(result[4]))
+    for per_gpu_result in result.split("\n"):
+        info = per_gpu_result.split(",")
+        gpu_util = int(info[0])
+        gpu_mem_percent = int(100 - float(info[1]) * 100 / float(info[2]))
+        gpu_pow_percent = int(float(info[3]) * 100 / float(info[4]))
 
-    report += f" G{gpu_util:02} M{gpu_mem_percent:02} P{gpu_pow_percent:02}"
+        report += f" G{gpu_util:02} M{gpu_mem_percent:02} P{gpu_pow_percent:02}"
 
     print(report)
 
