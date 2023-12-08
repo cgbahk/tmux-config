@@ -29,22 +29,25 @@ def main():
         print(report)
         sys.exit()
 
-    result = subprocess.check_output(
+    process = subprocess.run(
         [
             "nvidia-smi",
             "--format=csv,noheader,nounits",
             #            0               1           2            3          4
             "--query-gpu=utilization.gpu,memory.free,memory.total,power.draw,power.limit",
-        ]
-    ).decode().strip()
+        ],
+        capture_output=True,
+        text=True,
+    )
 
-    for per_gpu_result in result.split("\n"):
-        info = per_gpu_result.split(",")
-        gpu_util = int(info[0])
-        gpu_mem_percent = int(100 - float(info[1]) * 100 / float(info[2]))
-        gpu_pow_percent = int(float(info[3]) * 100 / float(info[4]))
+    if process.returncode == 0:
+        for per_gpu_result in process.stdout.strip().split("\n"):
+            info = per_gpu_result.split(",")
+            gpu_util = int(info[0])
+            gpu_mem_percent = int(100 - float(info[1]) * 100 / float(info[2]))
+            gpu_pow_percent = int(float(info[3]) * 100 / float(info[4]))
 
-        report += f" G{gpu_util:02} M{gpu_mem_percent:02} P{gpu_pow_percent:02}"
+            report += f" G{gpu_util:02} M{gpu_mem_percent:02} P{gpu_pow_percent:02}"
 
     print(report)
 
